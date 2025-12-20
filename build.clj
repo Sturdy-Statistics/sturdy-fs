@@ -61,10 +61,16 @@
   (b/delete {:path target})
   (println "Cleaned" target))
 
+(defn prepare
+  [_]
+  (b/copy-dir {:src-dirs ["src"]
+               :target-dir class-dir}))
+
 (defn jar
   "Create a thin JAR (not standalone) with a POM."
   [_]
   (clean nil)
+  (prepare nil)
 
   (b/write-pom
    {:class-dir class-dir
