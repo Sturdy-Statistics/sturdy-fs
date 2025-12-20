@@ -43,13 +43,13 @@
     (catch Throwable _ nil)))
 
 (def version
-  (let [sha (git-short-sha)]
-    (if-let [tag (some-> (or (git-exact-tag) (git-describe-last-tag))
-                         normalize-tag->version)]
-      (if (git-exact-tag)
-        tag                          ; clean semver for releases
-        (format "%s-g%s" tag sha))   ; tag + sha for non-release commits
-      (format "0.1.%s-g%s" commit-count sha))))
+  (let [sha   (git-short-sha)
+        exact (some-> (git-exact-tag) normalize-tag->version)
+        last  (some-> (git-describe-last-tag) normalize-tag->version)]
+    (cond
+      exact exact
+      last  (format "%s-g%s" last sha)
+      :else (format "0.1.%s-g%s" commit-count sha))))
 
 (def jar-file (format "%s/%s-%s.jar" target (name lib) version))
 
