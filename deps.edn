@@ -1,0 +1,26 @@
+{:paths ["src"]
+
+ :deps {babashka/fs         {:mvn/version "0.5.27"}
+        com.taoensso/truss  {:mvn/version "2.2.0"}}
+
+ :license {:name "Apache License 2.0"
+           :url "https://www.apache.org/licenses/LICENSE-2.0"}
+
+ :aliases {:test
+           {:extra-paths ["test" "test-resources"]
+            :extra-deps  {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+            :main-opts ["-m" "cognitect.test-runner"]
+            :exec-fn     cognitect.test-runner.api/test}
+
+           :build
+           {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}
+                   slipset/deps-deploy           {:mvn/version "0.2.2"}}
+            :ns-default build}
+
+           :deploy
+           {:deps {io.github.clojure/tools.build {:mvn/version "0.10.10"}
+                   slipset/deps-deploy           {:mvn/version "0.2.2"}}
+            :ns-default build}}}
+
+;; clj -T:build jar
+;; env CLOJARS_USERNAME=username CLOJARS_PASSWORD=clojars-token clj -T:deploy deploy
