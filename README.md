@@ -4,6 +4,12 @@ A small collection of file system utilities for Clojure.
 
 This library provides a thin, opinionated wrapper around [`babashka.fs`](https://github.com/babashka/fs) for common tasks such as reading and writing files, handling byte arrays, and working with paths.
 
+[![Clojars Project](https://img.shields.io/clojars/v/com.sturdystats/sturdy-fs.svg)](https://clojars.org/com.sturdystats/sturdy-fs)
+
+```
+com.sturdystats/sturdy-fs {:mvn/version "VERSION"}
+```
+
 ## Features
 
 - Read files as bytes, strings, EDN, or lines
