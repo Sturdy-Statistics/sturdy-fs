@@ -6,7 +6,7 @@ This library provides a thin, opinionated wrapper around [`babashka.fs`](https:/
 
 [![Clojars Project](https://img.shields.io/clojars/v/com.sturdystats/sturdy-fs.svg)](https://clojars.org/com.sturdystats/sturdy-fs)
 
-```
+```clj
 com.sturdystats/sturdy-fs {:mvn/version "VERSION"}
 ```
 
