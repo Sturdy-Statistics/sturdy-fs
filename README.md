@@ -31,6 +31,12 @@ com.sturdystats/sturdy-fs {:mvn/version "VERSION"}
 - File watching
 - Platform-specific abstractions beyond what `babashka.fs` provides
 
+## License
+
+Apache License 2.0
+
+Copyright © Sturdy Statistics
+
 <!-- Local Variables: -->
 <!-- fill-column: 1000000 -->
 <!-- End: -->
