@@ -64,42 +64,45 @@
 
 (defn spit-bytes!
   "Write byte[] to file. Creates parent dirs.
-   Options: {:append true | :create true | :truncate-existing true} (defaults match fs/write-bytes)."
+   Options:
+     :append  - true to append (mutually exclusive with :atomic?)
+     :atomic? - true to write to temp file and move (mutually exclusive with :append)
+     Other opts passed to fs/write-bytes."
   ([p bytes] (spit-bytes! p bytes {}))
-  ([p bytes opts]
-   (let [path (fs/path p)]
+  ([p bytes {:keys [atomic? append]}]
+   (have identity (not (and append atomic?)))
+   (let [path  (fs/path p)
+         bytes (have some? bytes)]
      (ensure-parent! path)
-     (fs/write-bytes path (have some? bytes) opts)
+     (cond
+       atomic?
+       (let [dir (or (fs/parent path) (fs/cwd))
+             ;; temp in same dir enables true atomic rename
+             tmp (fs/create-temp-file {:dir    dir
+                                       :prefix (str (fs/file-name path) ".")
+                                       :suffix ".tmp"})]
+         (fs/write-bytes tmp bytes {:truncate-existing true :create true})
+         (fs/move tmp path {:replace-existing true :atomic-move true}))
+
+       append
+       (fs/write-bytes path bytes {:append true :create true})
+
+       :else
+       (fs/write-bytes path bytes {:truncate-existing true :create true}))
      path)))
 
 (defn spit-string!
-  "Write String with charset (default UTF-8). Creates parent dirs.
-   {:atomic? true} will write to a temp file and atomically move into place.
-   Note: :append and :atomic? are mutually exclusive; use one or the other."
+  "Write String. Creates parent dirs.
+   Options:
+     :charset - default UTF-8
+     :append  - true to append (mutually exclusive with :atomic?)
+     :atomic? - true to write to temp file and move (mutually exclusive with :append)"
   ([p s] (spit-string! p s {}))
-  ([p s {:keys [charset atomic? append]
+  ([p s {:keys [charset _atomic? _append] :as opts
          :or   {charset utf8}}]
-   (have identity (not (and append atomic?)))
-   (let [path (fs/path p)
-         bs   (.getBytes ^String (have string? s) ^Charset charset)]
-     (ensure-parent! path)
-     (cond
-       append
-       (fs/write-bytes path bs {:append true :create true})
-
-       atomic?
-       (let [dir (or (fs/parent path) (fs/cwd))
-             _   (ensure-parent! dir)
-             ;; temp in same dir enables true atomic rename
-             tmp (fs/create-temp-file {:dir dir
-                                       :prefix (str (fs/file-name path) ".")
-                                       :suffix ".tmp"})]
-         (fs/write-bytes tmp bs {:truncate-existing true :create true})
-         (fs/move tmp path {:replace-existing true :atomic-move true}))
-
-       :else
-       (fs/write-bytes path bs {:truncate-existing true :create true}))
-     path)))
+   (let [bs (.getBytes ^String (have string? s) ^Charset charset)]
+     ;; Pass all options (except charset) to spit-bytes!
+     (spit-bytes! p bs (dissoc opts :charset)))))
 
 (defn spit-edn!
   "Write EDN to file (prn-str). Creates parent dirs."

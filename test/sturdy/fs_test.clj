@@ -101,3 +101,18 @@
       (testing "throws on incorrect permissions"
         (x/chmod-600! p)
         (is (throws? :any (x/ensure-400 p)))))))
+
+(deftest spit-bytes-atomic
+  (let [p (pth "data.bin")
+        b1 (.getBytes "hello")
+        b2 (.getBytes "world")]
+    ;; 1. Initial atomic write
+    (x/spit-bytes! p b1 {:atomic? true})
+    (is (= "hello" (x/slurp-string p)))
+
+    ;; 2. Overwrite atomic
+    (x/spit-bytes! p b2 {:atomic? true})
+    (is (= "world" (x/slurp-string p)))
+
+    ;; 3. Ensure contract holds (mutex)
+    (is (throws? :any (x/spit-bytes! p b1 {:atomic? true :append true})))))
