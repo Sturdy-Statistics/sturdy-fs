@@ -121,3 +121,25 @@
   [path]
   (let [p (fs/path path)]
     (fs/set-posix-file-permissions p "r--------")))
+
+(defn- ensure-posix-perms!
+  "Helper to assert POSIX permissions match an expected string format (e.g., 'rw-------')."
+  [path ^String expected-set]
+  (let [p            (fs/path path)
+        actual-set   (-> p fs/posix-file-permissions fs/posix->str)]
+    (when (not= expected-set actual-set)
+      (throw (ex-info (str "Invalid file permissions for " p)
+                      {:path     (str p)
+                       :expected expected-set
+                       :actual   actual-set})))
+    p))
+
+(defn ensure-600
+  "Asserts file has rw------- permissions. Throws on mismatch. Returns path."
+  [path]
+  (ensure-posix-perms! path "rw-------"))
+
+(defn ensure-400
+  "Asserts file has r-------- permissions. Throws on mismatch. Returns path."
+  [path]
+  (ensure-posix-perms! path "r--------"))

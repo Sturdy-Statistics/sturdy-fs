@@ -75,3 +75,29 @@
     (is (= "rw-------" (perms p)))
     (x/chmod-400! p)
     (is (= "r--------" (perms p)))))
+
+(deftest ensure-permissions-test
+  (let [p (pth "sensitive.txt")]
+    ;; Create file with default permissions (usually 644 or 755)
+    (x/spit-string! p "top secret")
+
+    (testing "ensure-600"
+      (testing "throws on default/incorrect permissions"
+        (is (throws? :any (x/ensure-600 p))))
+
+      (testing "returns path on success"
+        (x/chmod-600! p)
+        (is (= p (x/ensure-600 p))))
+
+      (testing "throws if permissions are too restrictive (e.g. 400)"
+        (x/chmod-400! p)
+        (is (throws? :any (x/ensure-600 p)))))
+
+    (testing "ensure-400"
+      (testing "returns path on success"
+        ;; File is currently 400 from previous step
+        (is (= p (x/ensure-400 p))))
+
+      (testing "throws on incorrect permissions"
+        (x/chmod-600! p)
+        (is (throws? :any (x/ensure-400 p)))))))
