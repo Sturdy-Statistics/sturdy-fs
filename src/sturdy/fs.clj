@@ -81,8 +81,12 @@
              tmp (fs/create-temp-file {:dir    dir
                                        :prefix (str (fs/file-name path) ".")
                                        :suffix ".tmp"})]
-         (fs/write-bytes tmp bytes {:truncate-existing true :create true})
-         (fs/move tmp path {:replace-existing true :atomic-move true}))
+         (try
+           (fs/write-bytes tmp bytes {:truncate-existing true :create true})
+           (fs/move tmp path {:replace-existing true :atomic-move true})
+           (catch Exception e
+             (fs/delete-if-exists tmp)
+             (throw e))))
 
        append
        (fs/write-bytes path bytes {:append true :create true})
@@ -146,3 +150,28 @@
   "Asserts file has r-------- permissions. Throws on mismatch. Returns path."
   [path]
   (ensure-posix-perms! path "r--------"))
+
+(defn atomic-move
+  "Attempts an OS-level atomic move.
+   If src and dst are on different filesystems, falls back to a
+   copy-delete strategy which ensures dst is updated atomically
+   (though the removal of src is not atomic relative to the update of dst)."
+  [src dst]
+  (let [src (fs/path src)
+        dst (fs/path dst)]
+    (ensure-parent! dst)
+    (try
+      ;; try an atomic move
+      (fs/move src dst {:atomic-move true :replace-existing true})
+      (catch java.nio.file.AtomicMoveNotSupportedException _
+        ;; fallback for Cross-Filesystem moves
+        (let [dir (or (fs/parent dst) (fs/cwd))
+              tmp (fs/create-temp-file {:dir dir
+                                        :prefix (str (fs/file-name dst) ".")
+                                        :suffix ".tmp"})]
+          ;; 1. Copy content to the destination partition
+          (fs/copy src tmp {:replace-existing true})
+          ;; 2. Atomic swap on the destination partition
+          (fs/move tmp dst {:replace-existing true :atomic-move true})
+          ;; 3. Cleanup source (not strictly atomic with step 2)
+          (fs/delete src))))))

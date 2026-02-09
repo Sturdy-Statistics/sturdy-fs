@@ -116,3 +116,49 @@
 
     ;; 3. Ensure contract holds (mutex)
     (is (throws? :any (x/spit-bytes! p b1 {:atomic? true :append true})))))
+
+(deftest atomic-move-test
+  (testing "basic atomic move (happy path)"
+    (let [src (pth "src.txt")
+          dst (pth "dst.txt")]
+      (x/spit-string! src "important data")
+
+      (x/atomic-move src dst)
+
+      (is (fs/exists? dst) "Destination should exist")
+      (is (not (fs/exists? src)) "Source should be gone")
+      (is (= "important data" (x/slurp-string dst)) "Content should be preserved")))
+
+  (testing "overwrites existing destination"
+    (let [src (pth "new-version.txt")
+          dst (pth "config.json")]
+      (x/spit-string! dst "{\"version\": 1}")
+      (x/spit-string! src "{\"version\": 2}")
+
+      (x/atomic-move src dst)
+
+      (is (= "{\"version\": 2}" (x/slurp-string dst)) "Destination should be overwritten")
+      (is (not (fs/exists? src)))))
+
+  (testing "creates missing parent directories for destination"
+    (let [src (pth "deep-src.txt")
+          dst (pth "a" "b" "c" "moved.txt")]
+      (x/spit-string! src "deep data")
+
+      (x/atomic-move src dst)
+
+      (is (fs/exists? dst))
+      (is (= "deep data" (x/slurp-string dst)))))
+
+  (testing "fails when source does not exist"
+    (let [src (pth "ghost.txt")
+          dst (pth "wont-exist.txt")]
+      ;; Expecting a java.nio.file.NoSuchFileException or similar
+      (is (throws? :any (x/atomic-move src dst)))))
+
+  (testing "move file to itself (no-op or success)"
+    (let [src (pth "same.txt")]
+      (x/spit-string! src "content")
+      ;; Moving a file to itself should not delete the file
+      (x/atomic-move src src)
+      (is (= "content" (x/slurp-string src))))))
