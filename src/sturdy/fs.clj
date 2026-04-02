@@ -13,6 +13,7 @@
   (cond
     (instance? Charset c) true
     (string? c)
+    #_{:clj-kondo/ignore [:redundant-do]}
     (try (do (Charset/forName c) true)
          (catch Exception _ false))
     :else false))

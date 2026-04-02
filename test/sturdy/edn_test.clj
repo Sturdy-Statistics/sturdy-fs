@@ -1,11 +1,11 @@
 (ns sturdy.edn-test
   (:require
-    [clojure.test :refer [deftest is]]
-    [babashka.fs :as fs]
-    [sturdy.fs :as sfs]
-    [taoensso.truss :refer [throws?]])
+   [clojure.test :refer [deftest is]]
+   [babashka.fs :as fs]
+   [sturdy.fs :as sfs]
+   [taoensso.truss :refer [throws?]])
   (:import
-    (java.nio.charset StandardCharsets)))
+   (java.nio.charset StandardCharsets)))
 
 (defn with-temp-file
   "Create a temp file, write `s` to it (as UTF-8 unless charset provided),
