@@ -108,9 +108,9 @@
   ([p s] (spit-string! p s {}))
   ([p s {:keys [charset _atomic? _append] :as opts
          :or   {charset utf8}}]
-   (let [^String s* (have string? s)
+   (let [^String s' (have string? s)
          ^Charset c charset
-         bs (.getBytes s* c)]
+         bs (.getBytes s' c)]
      ;; Pass all options (except charset) to spit-bytes!
      (spit-bytes! p bs (dissoc opts :charset)))))
 
