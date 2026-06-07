@@ -5,6 +5,8 @@
    [sturdy.fs :as x]
    [taoensso.truss :refer [throws?]]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:dynamic *test-tmp* nil)
 
 (use-fixtures :each

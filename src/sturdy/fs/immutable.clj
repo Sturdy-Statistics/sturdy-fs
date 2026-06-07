@@ -3,6 +3,7 @@
    [clojure.java.io :as io]
    [babashka.fs :as fs])
   (:import
+   (java.io InputStream)
    (java.security MessageDigest)
    (java.nio.charset StandardCharsets)))
 
@@ -55,14 +56,14 @@
   "Computes a cryptographically bound hash of a file's relative path and its contents."
   ^bytes [root-path rel-path]
   (let [abs-path (fs/file root-path rel-path)
-        md       (MessageDigest/getInstance "SHA-256")
-        buffer   (byte-array 8192)]
+        ^MessageDigest md (MessageDigest/getInstance "SHA-256")
+        ^bytes buffer     (byte-array 8192)]
 
     ;; 1. Hash the relative path with a trailing null-byte delimiter (\u0000)
-    (.update md (.getBytes (str rel-path "\u0000") StandardCharsets/UTF_8))
+    (.update md (.getBytes ^String (str rel-path "\u0000") StandardCharsets/UTF_8))
 
     ;; 2. Hash the file contents
-    (with-open [in (io/input-stream abs-path)]
+    (with-open [^InputStream in (io/input-stream abs-path)]
       (loop []
         (let [bytes-read (.read in buffer)]
           (when (pos? bytes-read)
@@ -87,7 +88,7 @@
         file-hashes (map #(compute-file-sha256 root %) files)
 
         ;; Finally, hash the concatenated file hashes to seal the directory
-        dir-md      (MessageDigest/getInstance "SHA-256")]
+        ^MessageDigest dir-md (MessageDigest/getInstance "SHA-256")]
 
     (doseq [fh file-hashes]
       (.update dir-md ^bytes fh))

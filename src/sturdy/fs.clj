@@ -7,6 +7,8 @@
   (:import
    (java.nio.charset Charset StandardCharsets)))
 
+(set! *warn-on-reflection* true)
+
 (def ^Charset utf8 StandardCharsets/UTF_8)
 
 (defn- charset? [c]
@@ -46,7 +48,8 @@
   "Read entire file as String. Charset defaults to UTF-8."
   ([p] (slurp-string p utf8))
   ([p ^Charset cs]
-   (String. ^bytes (slurp-bytes p) (have charset? cs))))
+   (let [^Charset c (have charset? cs)]
+     (String. ^bytes (slurp-bytes p) c))))
 
 (defn slurp-edn
   "Read entire file as EDN. Charset defaults to UTF-8."
@@ -105,7 +108,9 @@
   ([p s] (spit-string! p s {}))
   ([p s {:keys [charset _atomic? _append] :as opts
          :or   {charset utf8}}]
-   (let [bs (.getBytes ^String (have string? s) ^Charset charset)]
+   (let [^String s* (have string? s)
+         ^Charset c charset
+         bs (.getBytes s* c)]
      ;; Pass all options (except charset) to spit-bytes!
      (spit-bytes! p bs (dissoc opts :charset)))))
 

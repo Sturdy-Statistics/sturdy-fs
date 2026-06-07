@@ -7,6 +7,8 @@
   (:import
    (java.nio.charset StandardCharsets)))
 
+(set! *warn-on-reflection* true)
+
 (defn with-temp-file
   "Create a temp file, write `s` to it (as UTF-8 unless charset provided),
    pass its path to f, and clean up."
